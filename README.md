@@ -1,10 +1,12 @@
 # EVE Windows Terminal
 
-**EVE-NG consoles as named tabs in one Windows Terminal window.**
+**Console to All Nodes in EVE-NG opens one Windows Terminal window, with a tab for every node, named and sorted.**
 
-Click a node in EVE-NG, or use **Console to All Nodes**, and each console opens as a tab in a single Windows Terminal window. Each tab is named after its node (R1, SW1, ...), and the tabs are sorted the way you'd expect: R1, R2 ... R10, SW1. It replaces PuTTY or SecureCRT as the `telnet://` handler on Windows 10 and 11.
+Each tab is named after its node, and the tabs are in name order the way you'd expect: R1, R2 ... R10, SW1. Clicking a single node adds its console as a tab in the same window.
 
-It is two small native programs (C++ / Win32) and an installer. There is no runtime to install, and it needs neither PuTTY, PowerShell nor the Windows Telnet Client.
+It runs in Windows Terminal, the terminal built into Windows 11, so there is no PuTTY, SecureCRT or other terminal to install. On Windows 10, Windows Terminal is a free install from the Microsoft Store.
+
+It is the `telnet://` handler for Windows 10 and 11: two small native programs (C++ / Win32) and an installer. There is no runtime to install, and it needs neither PowerShell nor the Windows Telnet Client.
 
 ## Why
 
