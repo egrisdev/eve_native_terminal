@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  EVE Windows Terminal MSI, built by ./build.sh with wixl (msitools).
+
+  Installs evewt.exe (the telnet:// handler) and evewt-console.exe (the telnet
+  client each tab runs) to C:\Program Files\EVE-WT, and registers the handler
+  so it is listed under TELNET in Settings > Default apps.
+  Uninstall it from Settings > Apps.
+
+  wixl quirk: Custom Before= is ignored, so actions are only placed with After=
+  on actions wixl has already laid out (ExecuteAction, InstallInitialize).
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <!-- UpgradeCode must never change: it is how a newer MSI finds and replaces an older one. -->
+  <Product Id="*" Name="EVE Windows Terminal" Language="1033" Version="$(var.Version)"
+           Manufacturer="EVE-WT" UpgradeCode="FE25412F-0B1C-439F-A6C5-F6DB4D064A96">
+
+    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine"
+             Description="EVE-NG consoles as named tabs in one Windows Terminal window" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of EVE Windows Terminal is already installed." />
+    <Media Id="1" Cabinet="evewt.cab" EmbedCab="yes" />
+
+    <Icon Id="evewt.ico" SourceFile="eve-wt.ico" />
+    <Property Id="ARPPRODUCTICON" Value="evewt.ico" />
+    <Property Id="ARPNOMODIFY" Value="1" />
+    <Property Id="ARPCOMMENTS" Value="Opens EVE-NG telnet consoles as named tabs in one Windows Terminal window" />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLDIR" Name="EVE-WT" />
+      </Directory>
+    </Directory>
+
+    <DirectoryRef Id="INSTALLDIR">
+      <Component Id="Programs" Guid="7B3D4D9E-1BCB-4B5F-8033-F16A7362C0A5" Win64="yes">
+        <!-- wixl doesn't read version resources, so stamp the versions here: without
+             one, Windows Installer treats an exe as unversioned and an upgrade may
+             keep the old file. -->
+        <File Id="evewt.exe" Name="evewt.exe" Source="build/evewt.exe" DefaultVersion="$(var.Version).0" KeyPath="yes" />
+        <File Id="evewt_console.exe" Name="evewt-console.exe" Source="build/evewt-console.exe" DefaultVersion="$(var.Version).0" />
+      </Component>
+
+      <Component Id="Registration" Guid="E2B6A7DB-5702-4D45-BB1B-C38E84EAE44B" Win64="yes">
+        <!-- ProgId Windows runs for telnet:// links once it is the TELNET default. -->
+        <RegistryKey Root="HKLM" Key="SOFTWARE\Classes\EVEwt.telnet">
+          <RegistryValue Type="string" Value="EVE Windows Terminal" KeyPath="yes" />
+          <RegistryValue Type="string" Name="FriendlyTypeName" Value="EVE-NG telnet console" />
+          <RegistryValue Type="string" Name="URL Protocol" Value="" />
+        </RegistryKey>
+        <RegistryKey Root="HKLM" Key="SOFTWARE\Classes\EVEwt.telnet\DefaultIcon">
+          <RegistryValue Type="string" Value="[INSTALLDIR]evewt.exe,0" />
+        </RegistryKey>
+        <RegistryKey Root="HKLM" Key="SOFTWARE\Classes\EVEwt.telnet\Application">
+          <RegistryValue Type="string" Name="ApplicationName" Value="EVE Windows Terminal" />
+          <RegistryValue Type="string" Name="ApplicationDescription" Value="EVE-NG consoles as named tabs in one Windows Terminal window" />
+          <RegistryValue Type="string" Name="ApplicationIcon" Value="[INSTALLDIR]evewt.exe,0" />
+        </RegistryKey>
+        <RegistryKey Root="HKLM" Key="SOFTWARE\Classes\EVEwt.telnet\shell\open\command">
+          <RegistryValue Type="string" Value="&quot;[INSTALLDIR]evewt.exe&quot; &quot;%1&quot;" />
+        </RegistryKey>
+
+        <!-- Lists the app under TELNET in Settings > Default apps. -->
+        <RegistryKey Root="HKLM" Key="SOFTWARE\EVEwt\Capabilities">
+          <RegistryValue Type="string" Name="ApplicationName" Value="EVE Windows Terminal" />
+          <RegistryValue Type="string" Name="ApplicationDescription" Value="EVE-NG consoles as named tabs in one Windows Terminal window" />
+          <RegistryValue Type="string" Name="ApplicationIcon" Value="[INSTALLDIR]evewt.exe,0" />
+        </RegistryKey>
+        <RegistryKey Root="HKLM" Key="SOFTWARE\EVEwt\Capabilities\URLAssociations">
+          <RegistryValue Type="string" Name="telnet" Value="EVEwt.telnet" />
+        </RegistryKey>
+        <RegistryKey Root="HKLM" Key="SOFTWARE\RegisteredApplications">
+          <RegistryValue Type="string" Name="EVEwt" Value="SOFTWARE\EVEwt\Capabilities" />
+        </RegistryKey>
+      </Component>
+    </DirectoryRef>
+
+    <Feature Id="Main" Title="EVE Windows Terminal" Level="1">
+      <ComponentRef Id="Programs" />
+      <ComponentRef Id="Registration" />
+    </Feature>
+
+    <!-- Per-user steps run as evewt.exe itself, as the user who installs:
+         - after install: remove the per-user keys of the early hand-made setup (they override these
+           HKLM ones) and, since Windows won't let installers set default apps,
+           open Settings > Default apps if TELNET isn't already this app. It runs
+           in the UI sequence because actions in the execute sequence run in the
+           installer service's context and can't show windows on the desktop.
+         - before uninstall (while the exe still exists): clear the TELNET choice
+           if it is ours, so links fall back to the system handler. -->
+    <!-- The exe is run through a property holding its path, not FileKey=: a FileKey
+         action fails with error 2753 unless the file is being installed at that
+         moment, which isn't true after ExecuteAction or during uninstall. -->
+    <CustomAction Id="SetEvewtExe" Property="EVEWTEXE" Value="[INSTALLDIR]evewt.exe" />
+    <CustomAction Id="UserSetup" Property="EVEWTEXE" ExeCommand="--setup" Return="asyncNoWait" />
+    <CustomAction Id="UserCleanup" Property="EVEWTEXE" ExeCommand="--unregister" Return="ignore" />
+
+    <InstallUISequence>
+      <Custom Action="SetEvewtExe" After="CostFinalize" />
+      <Custom Action="UserSetup" After="ExecuteAction">NOT REMOVE</Custom>
+    </InstallUISequence>
+    <InstallExecuteSequence>
+      <!-- Upgrade by installing the new version first and removing the old one
+           afterwards. Removing first (the default) breaks if the app is running:
+           its in-use files get queued for deletion at the next restart, and that
+           deletes the newly installed files instead. Removing last only drops
+           the old version's claim on the shared files. -->
+      <RemoveExistingProducts After="InstallFinalize" />
+      <Custom Action="SetEvewtExe" After="CostFinalize" />
+      <Custom Action="UserCleanup" After="InstallInitialize">REMOVE ~= "ALL" AND NOT UPGRADINGPRODUCTCODE</Custom>
+    </InstallExecuteSequence>
+  </Product>
+</Wix>

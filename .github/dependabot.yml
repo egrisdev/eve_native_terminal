@@ -1,0 +1,13 @@
+# Dependabot checks for new versions once a week and opens one pull request.
+# The Build workflow runs on it; merge it if the build passes.
+# The project has no package dependencies, so only the workflow's actions are tracked.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ["*"]
