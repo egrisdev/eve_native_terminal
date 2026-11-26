@@ -2,6 +2,10 @@
 
 **Console to All Nodes in EVE-NG opens one Windows Terminal window, with a tab for every node, named and sorted.**
 
+![Console to All Nodes opening one Windows Terminal window with a named, sorted tab for each node](docs/demo.gif)
+
+*An illustration of what the tool does. It is a drawing, not a screen recording.*
+
 Each tab is named after its node, and the tabs are in name order the way you'd expect: R1, R2 ... R10, SW1. Clicking a single node adds its console as a tab in the same window.
 
 It runs in Windows Terminal, the terminal built into Windows 11, so there is no PuTTY, SecureCRT or other terminal to install. On Windows 10, Windows Terminal is a free install from the Microsoft Store.
@@ -99,6 +103,7 @@ The [Build workflow](.github/workflows/build.yml) does the same on every push an
 | `EVE-WT.wxs` | Installer definition (wixl / WiX v3 syntax). |
 | `build.sh` | Tests, cross-build and packaging. |
 | `.github/workflows/build.yml` | Runs `build.sh` on every push and pull request, and publishes a release for a version tag. |
+| `docs/demo.gif`, `tools/make-demo.py` | The animation at the top of this page, and the script that draws it. |
 
 ### Tests
 
