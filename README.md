@@ -1,6 +1,6 @@
 # EVE Windows Terminal
 
-**Console to All Nodes in EVE-NG opens one Windows Terminal window, with a tab for every node, named and sorted.**
+**Console to All Nodes in EVE-NG opens all nodes in tabs, alphabetically sorted, in the native Windows Terminal.**
 
 ![Console to All Nodes opening one Windows Terminal window with a named, sorted tab for each node](docs/demo.gif)
 
